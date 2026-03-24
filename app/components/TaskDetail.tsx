@@ -356,7 +356,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
       </div>
 
       {/* Right panel — chat (~45%) */}
-      {chatOpen && <ChatPanel task={task} />}
+      {chatOpen && <ChatPanel task={task} onClose={() => setChatOpen(false)} />}
     </div>
   )
 }

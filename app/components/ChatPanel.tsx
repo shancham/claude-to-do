@@ -23,16 +23,30 @@ function ChevronDownSmallIcon() {
 
 interface ChatPanelProps {
   task: Task
+  onClose?: () => void
 }
 
-export default function ChatPanel({ task }: ChatPanelProps) {
+export default function ChatPanel({ task, onClose }: ChatPanelProps) {
   return (
     <div className="flex-1 flex flex-col h-full bg-claude-bg overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-claude-border shrink-0">
-        <p className="text-[11px] font-semibold text-claude-secondary uppercase tracking-widest mb-2">
-          Task chat
-        </p>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-[11px] font-semibold text-claude-secondary uppercase tracking-widest">
+            Task chat
+          </p>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded text-claude-secondary/50 hover:text-claude-secondary hover:bg-claude-hover transition-colors"
+              aria-label="Collapse panel"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          )}
+        </div>
         <div className="inline-flex items-center gap-2 bg-claude-surface border border-claude-border rounded-full px-3 py-1">
           <span className="w-1.5 h-1.5 rounded-full bg-claude-accent shrink-0" />
           <span className="text-xs text-claude-secondary">
