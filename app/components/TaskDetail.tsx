@@ -125,7 +125,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
   return (
     <div className="flex flex-1 h-full animate-slide-in-right overflow-hidden">
       {/* Left panel — task info */}
-      <div className={`${chatOpen ? 'w-full md:w-[55%]' : 'w-full'} shrink-0 flex flex-col h-full border-r border-claude-border bg-claude-surface`}>
+      <div className={`shrink-0 flex flex-col h-full border-r border-claude-border bg-claude-surface ${chatOpen ? 'hidden md:flex md:w-[55%]' : 'w-full'}`}>
         {/* Back navigation */}
         <div className="px-5 py-4 border-b border-claude-border shrink-0 flex items-center justify-between">
           <button

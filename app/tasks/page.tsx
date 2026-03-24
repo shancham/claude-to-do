@@ -157,107 +157,68 @@ export default function TasksPage() {
               </button>
             </div>
 
-            {/* Desktop search bar */}
-            <div className="hidden md:block px-8 pb-4 shrink-0">
-              <div className="relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-claude-secondary pointer-events-none">
-                  <SearchIcon />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 bg-claude-surface border border-claude-border rounded-lg text-sm text-claude-text placeholder:text-claude-secondary/60 outline-none focus:border-claude-accent/60 transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Row 1: Mobile search icon + status pills */}
-            <div className="px-4 md:px-8 pb-3 flex items-center gap-2 shrink-0">
-              {/* Mobile search toggle */}
-              <div className="md:hidden shrink-0">
-                {searchExpanded ? (
-                  <div className="flex items-center gap-1.5 bg-claude-surface border border-claude-border rounded-lg px-2.5 py-1.5">
-                    <span className="text-claude-secondary shrink-0"><SearchIcon /></span>
-                    <input
-                      autoFocus
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search"
-                      className="text-sm bg-transparent outline-none text-claude-text w-28 placeholder:text-claude-secondary/60"
-                    />
-                    <button
-                      onClick={() => { setSearchExpanded(false); setSearchQuery('') }}
-                      className="text-claude-secondary/60 hover:text-claude-secondary transition-colors shrink-0"
-                      aria-label="Close search"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                        <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                      </svg>
-                    </button>
-                  </div>
-                ) : (
+            {/* Filter row — search icon + project filter + sort */}
+            <div className="px-4 md:px-8 pb-4 flex items-center gap-3 shrink-0">
+              {searchExpanded ? (
+                <div className="flex items-center gap-1.5 bg-claude-surface border border-claude-border rounded-lg px-2.5 py-1.5 flex-1">
+                  <span className="text-claude-secondary shrink-0"><SearchIcon /></span>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search tasks"
+                    className="flex-1 text-sm bg-transparent outline-none text-claude-text placeholder:text-claude-secondary/60"
+                  />
+                  <button
+                    onClick={() => { setSearchExpanded(false); setSearchQuery('') }}
+                    className="text-claude-secondary/60 hover:text-claude-secondary transition-colors shrink-0"
+                    aria-label="Close search"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <>
                   <button
                     onClick={() => setSearchExpanded(true)}
-                    className="p-2 text-claude-secondary hover:text-claude-text rounded-lg hover:bg-claude-hover transition-colors"
+                    className="p-1.5 text-claude-secondary hover:text-claude-text rounded-lg hover:bg-claude-hover transition-colors shrink-0"
                     aria-label="Search"
                   >
                     <SearchIcon />
                   </button>
-                )}
-              </div>
-
-              {/* Status pills — horizontal scroll */}
-              <div className={`flex items-center gap-1 overflow-x-auto scrollbar-hide ${searchExpanded ? 'hidden' : 'flex'} md:flex`}>
-                {STATUS_FILTERS.map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => setStatusFilter(f.value)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
-                      statusFilter === f.value
-                        ? 'bg-claude-text text-white border-claude-text'
-                        : 'border-claude-border text-claude-secondary hover:text-claude-text hover:border-claude-text/30'
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-claude-secondary whitespace-nowrap">Filter by project</span>
+                    <select
+                      value={projectFilter}
+                      onChange={(e) => setProjectFilter(e.target.value)}
+                      className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
+                    >
+                      <option value="all">All</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-claude-secondary whitespace-nowrap">Sort by</span>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as SortBy)}
+                      className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
+                    >
+                      {SORT_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Row 2: Filter + Sort — horizontal scroll on mobile */}
-            <div className="px-4 md:px-8 pb-4 flex items-center gap-3 overflow-x-auto scrollbar-hide shrink-0">
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-xs text-claude-secondary whitespace-nowrap">Filter by project</span>
-                <select
-                  value={projectFilter}
-                  onChange={(e) => setProjectFilter(e.target.value)}
-                  className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
-                >
-                  <option value="all">All</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-xs text-claude-secondary whitespace-nowrap">Sort by</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortBy)}
-                  className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-8 pb-4">
+            <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-4">
               {sortedTasks.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 gap-2 text-center">
                   <p className="text-sm text-claude-secondary">No tasks found</p>
@@ -272,7 +233,7 @@ export default function TasksPage() {
                       <th className="w-6 pb-2.5 pr-2" />
                       <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4 w-28">Project</th>
                       <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4">Task</th>
-                      <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4 w-28">Status</th>
+                      <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4 w-36">Status</th>
                       <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4 w-24">Priority</th>
                       <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 w-28">Due date</th>
                     </tr>
@@ -331,7 +292,7 @@ export default function TasksPage() {
                             </p>
                           </td>
                           <td className="py-3 pr-4">
-                            <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full ${statusCfg.className}`} style={statusCfg.style}>
+                            <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${statusCfg.className}`} style={statusCfg.style}>
                               {statusCfg.label}
                             </span>
                           </td>
