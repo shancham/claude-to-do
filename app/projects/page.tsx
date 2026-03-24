@@ -264,20 +264,25 @@ export default function ProjectsPage() {
 
             {/* Recent chats */}
             <section className="mb-8">
-              {RECENT_CHATS.map((chat, i) => (
-                <button
-                  key={chat.id}
-                  onClick={() => router.push('/chat')}
-                  className={`w-full text-left py-4 flex items-start justify-between gap-4 hover:bg-gray-50 transition-colors -mx-4 px-4 ${
-                    i < RECENT_CHATS.length - 1 ? 'border-b border-gray-100' : ''
-                  }`}
-                >
-                  <div>
-                    <p className="text-sm font-medium text-claude-text">{chat.title}</p>
-                    <p className="text-xs text-[#aaa] mt-0.5">Last message {chat.time}</p>
-                  </div>
-                </button>
-              ))}
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <h2 className="text-sm font-semibold text-claude-text">Chats</h2>
+              </div>
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                {RECENT_CHATS.map((chat, i) => (
+                  <button
+                    key={chat.id}
+                    onClick={() => router.push('/chat')}
+                    className={`w-full text-left px-4 py-3.5 hover:bg-gray-50 transition-colors flex items-start justify-between gap-4 ${
+                      i < RECENT_CHATS.length - 1 ? 'border-b border-gray-100' : ''
+                    }`}
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-claude-text">{chat.title}</p>
+                      <p className="text-xs text-[#aaa] mt-0.5">Last message {chat.time}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </section>
 
             {/* Memory */}
