@@ -30,28 +30,28 @@ const CHAT_MESSAGES: Message[] = [
   {
     id: 1,
     role: 'user',
-    text: "Morning — let me catch you up on a few things. We have a landing page launch coming up and I want to make sure we do a copy review before it goes live. Last time there were typos all over the pricing page. And the onboarding wireframes need a full redesign — we're losing people at step 3.",
+    text: "Morning — let me catch you up on a few things. We have the claude.ai pricing page launch coming up and I want to make sure we do a copy review before it goes live. Last time there were typos all over the plan descriptions. And the onboarding flow needs a full redesign — we're still losing people at the API key step.",
   },
   {
     id: 2,
     role: 'assistant',
     text: "Got it — I've identified two action items from that.\n\nThe copy review sounds time-sensitive with the launch approaching. Want to start there, or work through the onboarding redesign first?",
     suggestedTasks: [
-      { id: 't1', title: 'Copy review before Webflow push', projectId: 'general', priority: 'medium' },
-      { id: 't2', title: 'Onboarding flow wireframes v2', projectId: 'general', priority: 'high' },
+      { id: 't1', title: 'Copy review — claude.ai pricing page', projectId: 'general', priority: 'medium' },
+      { id: 't2', title: 'New user onboarding — v2 wireframes', projectId: 'general', priority: 'high' },
     ],
   },
   {
     id: 3,
     role: 'user',
-    text: "Actually there's something more urgent — the pagination on our recipe search results breaks after page 3 whenever the cuisine filter is applied. It just loops back to page 1.",
+    text: "Actually there's something more pressing — we need a PRD written for shared project templates in Cowork. The design kickoff is next week and the design team needs it to start wireframing.",
   },
   {
     id: 4,
     role: 'assistant',
-    text: "That's a blocking bug — looks high priority, and it's already past its due date.\n\nIf you can share the recipe search component or tell me where the filter state lives, I can help track down the root cause now.",
+    text: "That one's time-sensitive — I'd flag it as high priority with the design kickoff coming up.\n\nWant to start with the template types users would need, or work through the creation and sharing flow first?",
     suggestedTasks: [
-      { id: 't4', title: 'Pagination bug on recipe search results', projectId: 'foodie', priority: 'high' },
+      { id: 't4', title: 'Cowork — PRD for shared project templates', projectId: 'foodie', priority: 'high' },
     ],
   },
 ]
@@ -212,7 +212,7 @@ export default function ChatPage() {
             {/* Chat header */}
             <div className="flex items-center justify-between px-6 py-3.5 border-b border-claude-border shrink-0">
               <button className="flex items-center gap-1.5 text-sm font-medium text-claude-text hover:text-claude-accent transition-colors">
-                Sample chat
+                Claude.ai pricing page launch
                 <ChevronDownIcon />
               </button>
               <div className="flex items-center gap-1">

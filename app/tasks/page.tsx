@@ -312,7 +312,7 @@ export default function TasksPage() {
 
             <div className="shrink-0 h-8 flex items-center justify-center border-t border-claude-border">
               <p className="text-xs text-claude-secondary/50">
-                Claude To Do — a feature concept prototype
+                Claude Tasks: a feature concept prototype
               </p>
             </div>
           </div>}

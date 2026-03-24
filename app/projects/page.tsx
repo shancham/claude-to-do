@@ -11,9 +11,9 @@ import { useTaskStore } from '../../store/taskStore'
 const PROJECT_ID = 'foodie' // Cowork
 
 const RECENT_CHATS = [
-  { id: 1, title: 'Upcoming landing page launch', time: '2 hours ago' },
-  { id: 2, title: 'User research synthesis kickoff', time: '1 day ago' },
-  { id: 3, title: 'Bug triage — recipe search', time: '3 days ago' },
+  { id: 1, title: 'Cowork research strategy session', time: '2 hours ago' },
+  { id: 2, title: 'New user onboarding UX review', time: '1 day ago' },
+  { id: 3, title: 'Cowork feature planning', time: '3 days ago' },
 ]
 
 // ─── Icons ────────────────────────────────────────────────────────────────────

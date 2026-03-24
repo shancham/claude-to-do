@@ -1,6 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTaskStore } from '../../store/taskStore'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -110,12 +112,14 @@ function NavBtn({
   active = false,
   isOpen,
   onClick,
+  hasUnread = false,
 }: {
   icon: React.ReactNode
   label: string
   active?: boolean
   isOpen: boolean
   onClick?: () => void
+  hasUnread?: boolean
 }) {
   const activeClass = active
     ? 'bg-white text-claude-text shadow-sm'
@@ -126,9 +130,12 @@ function NavBtn({
       <button
         title={label}
         onClick={onClick}
-        className={`w-9 h-9 flex items-center justify-center rounded-lg transition-colors mx-auto ${activeClass}`}
+        className={`relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors mx-auto ${activeClass}`}
       >
         {icon}
+        {hasUnread && (
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-claude-accent" />
+        )}
       </button>
     )
   }
@@ -140,6 +147,9 @@ function NavBtn({
     >
       <span className="shrink-0">{icon}</span>
       {label}
+      {hasUnread && (
+        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-claude-accent shrink-0" />
+      )}
     </button>
   )
 }
@@ -164,6 +174,11 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, activeItem = 'Tasks' }: SidebarProps) {
   const router = useRouter()
+  const { unvisitedItems, markItemVisited } = useTaskStore()
+
+  useEffect(() => {
+    markItemVisited(activeItem)
+  }, [activeItem])
 
   return (
     <aside
@@ -190,7 +205,8 @@ export default function Sidebar({ isOpen, activeItem = 'Tasks' }: SidebarProps) 
             label={label}
             active={label === activeItem}
             isOpen={isOpen}
-            onClick={href ? () => router.push(href) : undefined}
+            hasUnread={unvisitedItems.includes(label)}
+            onClick={href ? () => { markItemVisited(label); router.push(href) } : undefined}
           />
         ))}
       </div>
@@ -202,7 +218,7 @@ export default function Sidebar({ isOpen, activeItem = 'Tasks' }: SidebarProps) 
             <p className="px-2.5 pb-1 text-xs text-claude-secondary font-medium tracking-wide">
               Starred
             </p>
-            <SidebarLink label="Setting up dev environment" />
+            <SidebarLink label="Claude.ai Q2 roadmap planning" />
             <SidebarLink label="Animations for landing page" />
           </div>
           <div className="px-3 mt-3">
