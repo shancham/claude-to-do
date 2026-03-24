@@ -79,12 +79,17 @@ const STATUS_ORDER: Record<string, number> = { 'in-progress': 0, todo: 1, done: 
 
 export default function TasksPage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchExpanded, setSearchExpanded] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [sortBy, setSortBy] = useState<SortBy>('priority')
   const [dragId, setDragId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
 
   const prevSelectedIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (window.innerWidth < 768) setSidebarOpen(false)
+  }, [])
 
   const {
     tasks,
@@ -152,7 +157,8 @@ export default function TasksPage() {
               </button>
             </div>
 
-            <div className="px-8 pb-4 shrink-0">
+            {/* Desktop search bar */}
+            <div className="hidden md:block px-8 pb-4 shrink-0">
               <div className="relative">
                 <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-claude-secondary pointer-events-none">
                   <SearchIcon />
@@ -167,13 +173,49 @@ export default function TasksPage() {
               </div>
             </div>
 
-            <div className="px-8 pb-4 flex items-center justify-between gap-4 shrink-0">
-              <div className="flex items-center gap-1 flex-wrap">
+            {/* Row 1: Mobile search icon + status pills */}
+            <div className="px-4 md:px-8 pb-3 flex items-center gap-2 shrink-0">
+              {/* Mobile search toggle */}
+              <div className="md:hidden shrink-0">
+                {searchExpanded ? (
+                  <div className="flex items-center gap-1.5 bg-claude-surface border border-claude-border rounded-lg px-2.5 py-1.5">
+                    <span className="text-claude-secondary shrink-0"><SearchIcon /></span>
+                    <input
+                      autoFocus
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search"
+                      className="text-sm bg-transparent outline-none text-claude-text w-28 placeholder:text-claude-secondary/60"
+                    />
+                    <button
+                      onClick={() => { setSearchExpanded(false); setSearchQuery('') }}
+                      className="text-claude-secondary/60 hover:text-claude-secondary transition-colors shrink-0"
+                      aria-label="Close search"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setSearchExpanded(true)}
+                    className="p-2 text-claude-secondary hover:text-claude-text rounded-lg hover:bg-claude-hover transition-colors"
+                    aria-label="Search"
+                  >
+                    <SearchIcon />
+                  </button>
+                )}
+              </div>
+
+              {/* Status pills — horizontal scroll */}
+              <div className={`flex items-center gap-1 overflow-x-auto scrollbar-hide ${searchExpanded ? 'hidden' : 'flex'} md:flex`}>
                 {STATUS_FILTERS.map((f) => (
                   <button
                     key={f.value}
                     onClick={() => setStatusFilter(f.value)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
                       statusFilter === f.value
                         ? 'bg-claude-text text-white border-claude-text'
                         : 'border-claude-border text-claude-secondary hover:text-claude-text hover:border-claude-text/30'
@@ -183,34 +225,35 @@ export default function TasksPage() {
                   </button>
                 ))}
               </div>
+            </div>
 
-              <div className="flex items-center gap-3 shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-claude-secondary whitespace-nowrap">Filter by project</span>
-                  <select
-                    value={projectFilter}
-                    onChange={(e) => setProjectFilter(e.target.value)}
-                    className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
-                  >
-                    <option value="all">All</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </div>
+            {/* Row 2: Filter + Sort — horizontal scroll on mobile */}
+            <div className="px-4 md:px-8 pb-4 flex items-center gap-3 overflow-x-auto scrollbar-hide shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs text-claude-secondary whitespace-nowrap">Filter by project</span>
+                <select
+                  value={projectFilter}
+                  onChange={(e) => setProjectFilter(e.target.value)}
+                  className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
+                >
+                  <option value="all">All</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
 
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs text-claude-secondary whitespace-nowrap">Sort by</span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as SortBy)}
-                    className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
-                  >
-                    {SORT_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-xs text-claude-secondary whitespace-nowrap">Sort by</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortBy)}
+                  className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
+                >
+                  {SORT_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../components/TopNav'
 import Sidebar from '../components/Sidebar'
@@ -119,6 +119,10 @@ function formatDueDate(dateStr: string): { text: string; overdue: boolean } {
 export default function ProjectsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const router = useRouter()
+
+  useEffect(() => {
+    if (window.innerWidth < 768) setSidebarOpen(false)
+  }, [])
   const { tasks, projects, setSelectedTask, setProjectFilter } = useTaskStore()
 
   const project = projects.find((p) => p.id === PROJECT_ID)

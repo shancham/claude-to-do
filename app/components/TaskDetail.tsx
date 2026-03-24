@@ -72,7 +72,12 @@ export default function TaskDetail({ task }: TaskDetailProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [draftTitle, setDraftTitle] = useState(task.title)
   const [moreActionsOpen, setMoreActionsOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(true)
   const moreActionsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (window.innerWidth < 768) setChatOpen(false)
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -119,8 +124,8 @@ export default function TaskDetail({ task }: TaskDetailProps) {
 
   return (
     <div className="flex flex-1 h-full animate-slide-in-right overflow-hidden">
-      {/* Left panel — task info (~55%) */}
-      <div className="w-[55%] shrink-0 flex flex-col h-full border-r border-claude-border bg-claude-surface">
+      {/* Left panel — task info */}
+      <div className={`${chatOpen ? 'w-full md:w-[55%]' : 'w-full'} shrink-0 flex flex-col h-full border-r border-claude-border bg-claude-surface`}>
         {/* Back navigation */}
         <div className="px-5 py-4 border-b border-claude-border shrink-0 flex items-center justify-between">
           <button
@@ -132,10 +137,21 @@ export default function TaskDetail({ task }: TaskDetailProps) {
           </button>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setChatOpen((v) => !v)}
+              className={`flex items-center gap-1.5 text-xs border rounded-full px-3 py-1.5 transition-colors ${
+                chatOpen
+                  ? 'text-claude-accent border-claude-accent/30 bg-claude-accent/8 hover:bg-claude-accent/15'
+                  : 'text-claude-secondary border-claude-border hover:text-claude-text hover:border-claude-text/30'
+              }`}
+            >
+              <ChatLinkIcon />
+              {chatOpen ? 'Hide chat' : 'Chat about this task'}
+            </button>
             {task.sourceChatTitle && (
               <button
                 title="Go to source conversation"
-                className="flex items-center gap-1.5 text-xs text-claude-secondary hover:text-claude-text border border-claude-border hover:border-claude-text/30 rounded-full px-3 py-1.5 transition-colors"
+                className="hidden sm:flex items-center gap-1.5 text-xs text-claude-secondary hover:text-claude-text border border-claude-border hover:border-claude-text/30 rounded-full px-3 py-1.5 transition-colors"
               >
                 <ChatLinkIcon />
                 Go to original chat
@@ -340,7 +356,7 @@ export default function TaskDetail({ task }: TaskDetailProps) {
       </div>
 
       {/* Right panel — chat (~45%) */}
-      <ChatPanel task={task} />
+      {chatOpen && <ChatPanel task={task} />}
     </div>
   )
 }

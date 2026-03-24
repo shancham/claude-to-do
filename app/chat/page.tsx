@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import TopNav from '../components/TopNav'
 import Sidebar from '../components/Sidebar'
@@ -177,11 +177,28 @@ function formatRailDate(dateStr: string): string {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+interface ToastData {
+  id: string
+  title: string
+  priority: string
+  dueDate?: string
+}
+
 export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [railOpen, setRailOpen] = useState(true)
   const [confirmedTaskIds, setConfirmedTaskIds] = useState<Set<string>>(new Set())
+  const [toast, setToast] = useState<ToastData | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const router = useRouter()
   const { tasks, projects, setSelectedTask } = useTaskStore()
+
+  useEffect(() => {
+    if (window.innerWidth < 768) {
+      setSidebarOpen(false)
+      setRailOpen(false)
+    }
+  }, [])
 
   const railTasks = [...confirmedTaskIds]
     .map((id) => tasks.find((t) => t.id === id))
@@ -189,6 +206,12 @@ export default function ChatPage() {
 
   function handleConfirmTask(taskId: string) {
     setConfirmedTaskIds((prev) => new Set([...prev, taskId]))
+    const task = tasks.find((t) => t.id === taskId)
+    if (task) {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      setToast({ id: task.id, title: task.title, priority: task.priority, dueDate: task.dueDate })
+      toastTimerRef.current = setTimeout(() => setToast(null), 5000)
+    }
   }
 
   function handleTaskClick(taskId: string) {
@@ -217,8 +240,9 @@ export default function ChatPage() {
               </button>
               <div className="flex items-center gap-1">
                 <button
-                  className="p-1.5 rounded-md text-claude-secondary/60 hover:text-claude-secondary hover:bg-claude-hover transition-colors"
-                  aria-label="Artifact"
+                  onClick={() => setRailOpen((v) => !v)}
+                  className={`p-1.5 rounded-md transition-colors ${railOpen ? 'text-claude-secondary/60 hover:text-claude-secondary hover:bg-claude-hover' : 'text-claude-accent bg-claude-accent/8 hover:bg-claude-accent/15'}`}
+                  aria-label="Toggle artifacts panel"
                 >
                   <ArtifactIcon />
                 </button>
@@ -377,11 +401,22 @@ export default function ChatPage() {
           </div>
 
           {/* Right rail */}
-          <div className="w-[300px] shrink-0 flex flex-col overflow-y-auto bg-claude-bg">
+          {railOpen && <div className="w-[300px] shrink-0 flex flex-col overflow-y-auto bg-claude-bg">
 
             {/* Artifacts section */}
             <div className="px-4 pt-5 pb-4 border-b border-claude-border">
-              <p className="text-xs font-semibold text-claude-text mb-3">Artifacts</p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-claude-text">Artifacts</p>
+                <button
+                  onClick={() => setRailOpen(false)}
+                  className="p-1 rounded text-claude-secondary/50 hover:text-claude-secondary hover:bg-claude-hover transition-colors"
+                  aria-label="Collapse panel"
+                >
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M5 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
               <div className="bg-claude-surface border border-claude-border rounded-lg p-3 flex items-center gap-3">
                 <div className="w-9 h-9 rounded-md bg-claude-bg border border-claude-border flex items-center justify-center shrink-0 text-claude-secondary/60">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -453,10 +488,38 @@ export default function ChatPage() {
                 </p>
               )}
             </div>
-          </div>
+          </div>}
 
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-claude-border rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 w-[calc(100%-2rem)] max-w-sm animate-slide-up">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-claude-text truncate">{toast.title}</p>
+            <p className="text-xs text-claude-secondary mt-0.5 capitalize">
+              {toast.priority} priority
+              {toast.dueDate && ` · Due ${formatRailDate(toast.dueDate)}`}
+            </p>
+          </div>
+          <button
+            onClick={() => { handleTaskClick(toast.id); setToast(null) }}
+            className="text-xs font-medium text-claude-accent border border-claude-accent/30 bg-claude-accent/8 rounded-md px-2.5 py-1 hover:bg-claude-accent/15 transition-colors shrink-0"
+          >
+            View task
+          </button>
+          <button
+            onClick={() => setToast(null)}
+            className="text-claude-secondary/50 hover:text-claude-secondary transition-colors shrink-0"
+            aria-label="Dismiss"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
