@@ -66,9 +66,9 @@ export default function Home() {
           {/* Author */}
           <p className="text-sm text-claude-secondary mb-8">
             Built by Shannon Chambers. Find me on{' '}
-            <a href="https://www.linkedin.com/in/shannon-chambers/" target="_blank" rel="noopener noreferrer" className="text-claude-text underline underline-offset-2 hover:text-claude-accent transition-colors">LinkedIn</a>,{' '}
-            <a href="https://shannonchambers.cv/" target="_blank" rel="noopener noreferrer" className="text-claude-text underline underline-offset-2 hover:text-claude-accent transition-colors">my personal site</a>, and{' '}
-            <a href="https://github.com/shancham" target="_blank" rel="noopener noreferrer" className="text-claude-text underline underline-offset-2 hover:text-claude-accent transition-colors">GitHub</a>.
+            <a href="https://www.linkedin.com/in/shannon-chambers/" target="_blank" rel="noopener noreferrer" className="no-underline hover:underline underline-offset-2 hover:text-claude-accent transition-colors">LinkedIn</a>,{' '}
+            <a href="https://shannonchambers.cv/" target="_blank" rel="noopener noreferrer" className="no-underline hover:underline underline-offset-2 hover:text-claude-accent transition-colors">my personal site</a>, and{' '}
+            <a href="https://github.com/shancham" target="_blank" rel="noopener noreferrer" className="no-underline hover:underline underline-offset-2 hover:text-claude-accent transition-colors">GitHub</a>.
           </p>
 
           {/* Why */}
@@ -121,17 +121,32 @@ export default function Home() {
               <div key={label} className="flex items-start gap-4">
                 <span className="text-claude-accent mt-0.5 text-lg leading-none shrink-0">✦</span>
                 <div>
-                  <p className="text-sm font-medium text-claude-text mb-0.5">{label}</p>
-                  <p className="text-sm text-claude-secondary leading-relaxed">{detail}</p>
+                  <p className="text-base font-medium text-claude-text mb-0.5">{label}</p>
+                  <p className="text-base text-claude-secondary leading-relaxed">{detail}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Cowork */}
-          <p className="text-base text-claude-secondary leading-relaxed mb-12">
-            Claude Tasks is also a natural onramp to Cowork. Claude analyzes each task and, if Cowork can help move it forward, surfaces a &ldquo;Start task in Cowork&rdquo; button right on the task detail view.
+          {/* Benefits for Anthropic */}
+          <p className="text-xs font-semibold text-claude-accent uppercase tracking-widest mb-3">The benefits for Anthropic</p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-4">
+            Anthropic&apos;s long-term pitch is that Claude is a useful, trustworthy collaborator. Tasks is a proof point for that. It moves Claude from a tool you query to a system that helps you follow through.
           </p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-4">Here&apos;s why that matters:</p>
+          <ul className="space-y-4 mb-12 pl-1">
+            {[
+              { label: 'Stickiness.', detail: 'Tasks give users a reason to come back to Claude specifically, rather than completing work elsewhere and only returning when they need a new answer. If your to-do list lives in Claude, your workflow lives in Claude.' },
+              { label: 'Accessible expansion.', detail: 'For users who haven\'t moved beyond Claude Chat, Tasks is a low-lift next step. Everyone\'s used a to-do app. And once someone starts using Tasks, they\'re that much closer to exploring everything else Claude has to offer.' },
+              { label: 'A bridge to Cowork.', detail: 'Tasks is a natural onramp. Claude analyzes each task and, if Cowork can help move it forward, surfaces a \u201cStart task in Cowork\u201d button right on the task detail view.' },
+              { label: 'Better signal.', detail: 'Understanding what tasks users care about, how they describe incomplete work, and what context helps them resume is valuable data for improving Claude\u2019s ability to be a long-term collaborator rather than a single-turn assistant.' },
+            ].map(({ label, detail }) => (
+              <li key={label} className="flex items-start gap-3 text-base text-claude-secondary leading-relaxed">
+                <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-claude-secondary/40 shrink-0" />
+                <span><span className="text-claude-text font-medium">{label}</span> {detail}</span>
+              </li>
+            ))}
+          </ul>
 
         </div>
       </main>
@@ -139,7 +154,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="px-8 py-5 border-t border-claude-border shrink-0 pb-24">
         <p className="text-xs text-claude-secondary/50 text-center">
-          Claude Tasks — a feature concept prototype exploring AI-native task management
+          Claude Tasks: a feature concept prototype exploring AI-native task management
         </p>
       </footer>
 
