@@ -1,353 +1,163 @@
-'use client'
+import Link from 'next/link'
 
-import React, { useEffect, useRef, useState } from 'react'
-import { TaskPriority, TaskStatus, useTaskStore } from '../store/taskStore'
-import TopNav from './components/TopNav'
-import Sidebar from './components/Sidebar'
-import TaskDetail from './components/TaskDetail'
-import NewTaskModal from './components/NewTaskModal'
-import ToastReminder from './components/ToastReminder'
-
-const STATUS_CONFIG: Record<TaskStatus, { label: string; className: string; style?: React.CSSProperties }> = {
-  todo: { label: 'To do', className: 'text-claude-secondary border border-claude-border' },
-  'in-progress': { label: 'In progress', className: 'border', style: { color: '#697955', borderColor: '#69795540', backgroundColor: '#69795515' } },
-  done: { label: 'Done', className: 'border', style: { color: '#91918D', borderColor: '#91918D40', backgroundColor: '#91918D15' } },
-}
-
-const PRIORITY_CONFIG: Record<TaskPriority, { label: string; className: string; style?: React.CSSProperties }> = {
-  high: { label: 'High', className: 'border', style: { color: '#D97757', borderColor: '#D9775740', backgroundColor: '#D9775715' } },
-  medium: { label: 'Medium', className: 'border', style: { color: '#D9C357', borderColor: '#D9C35740', backgroundColor: '#D9C35715' } },
-  low: { label: 'Low', className: 'text-claude-secondary border border-claude-border' },
-}
-
-function formatDueDate(dateStr: string): { text: string; overdue: boolean } {
-  const date = new Date(dateStr + 'T00:00:00')
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const diffDays = Math.round((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  const overdue = diffDays < 0
-  let text: string
-  if (diffDays === 0) text = 'Today'
-  else if (diffDays === 1) text = 'Tomorrow'
-  else if (diffDays === -1) text = 'Yesterday'
-  else if (diffDays < 0) text = `${Math.abs(diffDays)}d overdue`
-  else if (diffDays < 7) text = `In ${diffDays}d`
-  else text = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return { text, overdue }
-}
-
-function DragHandleIcon() {
+function ClaudeAsterisk() {
   return (
-    <svg width="12" height="14" viewBox="0 0 12 14" fill="none" aria-hidden="true">
-      <circle cx="4" cy="2.5" r="1.25" fill="currentColor" />
-      <circle cx="8" cy="2.5" r="1.25" fill="currentColor" />
-      <circle cx="4" cy="7" r="1.25" fill="currentColor" />
-      <circle cx="8" cy="7" r="1.25" fill="currentColor" />
-      <circle cx="4" cy="11.5" r="1.25" fill="currentColor" />
-      <circle cx="8" cy="11.5" r="1.25" fill="currentColor" />
+    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+      <circle cx="18" cy="18" r="17" stroke="#cc785c" strokeWidth="1.5" fill="none" />
+      <path
+        d="M18 6L20.8 14.7L29.5 18L20.8 21.3L18 30L15.2 21.3L6.5 18L15.2 14.7L18 6Z"
+        fill="#cc785c"
+      />
     </svg>
   )
 }
 
-function SearchIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.25" />
-      <path d="M10.5 10.5L13.5 13.5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-
-const STATUS_FILTERS: { label: string; value: TaskStatus | 'all' }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'To do', value: 'todo' },
-  { label: 'In progress', value: 'in-progress' },
-  { label: 'Done', value: 'done' },
+const FEATURES = [
+  {
+    label: 'Tasks surface automatically',
+    detail: 'Claude picks up on action items mid-conversation and logs them without interrupting your flow.',
+  },
+  {
+    label: 'Context travels with every task',
+    detail: 'Open any task and Claude already knows what you were working on and where you left off.',
+  },
+  {
+    label: 'Manage on your terms',
+    detail: 'Prioritize, sort, set reminders, and snooze. The task list is yours to shape.',
+  },
 ]
-
-type SortBy = 'priority' | 'due-date' | 'status' | 'manual'
-
-const SORT_OPTIONS: { label: string; value: SortBy }[] = [
-  { label: 'Priority', value: 'priority' },
-  { label: 'Due date', value: 'due-date' },
-  { label: 'Status', value: 'status' },
-  { label: 'Manual', value: 'manual' },
-]
-
-const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 }
-const STATUS_ORDER: Record<string, number> = { 'in-progress': 0, todo: 1, done: 2 }
 
 export default function Home() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [sortBy, setSortBy] = useState<SortBy>('priority')
-  const [dragId, setDragId] = useState<string | null>(null)
-  const [dragOverId, setDragOverId] = useState<string | null>(null)
-
-  // Collapse sidebar when user first opens a task; stays closed until manual toggle
-  const prevSelectedIdRef = useRef<string | null>(null)
-
-  const {
-    tasks,
-    projects,
-    selectedTaskId,
-    projectFilter,
-    statusFilter,
-    isNewTaskModalOpen,
-    setSelectedTask,
-    setProjectFilter,
-    setStatusFilter,
-    reorderTask,
-    openNewTaskModal,
-  } = useTaskStore()
-
-  const selectedTask = tasks.find((t) => t.id === selectedTaskId) ?? null
-
-  useEffect(() => {
-    if (selectedTaskId && prevSelectedIdRef.current === null) {
-      setSidebarOpen(false)
-    }
-    prevSelectedIdRef.current = selectedTaskId
-  }, [selectedTaskId])
-
-  const filteredTasks = tasks.filter((task) => {
-    const matchProject = projectFilter === 'all' || task.projectId === projectFilter
-    const matchStatus = statusFilter === 'all' || task.status === statusFilter
-    const matchSearch =
-      !searchQuery || task.title.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchProject && matchStatus && matchSearch
-  })
-
-  const sortedTasks = sortBy === 'manual' ? filteredTasks : [...filteredTasks].sort((a, b) => {
-    switch (sortBy) {
-      case 'priority':
-        return (PRIORITY_ORDER[a.priority] ?? 99) - (PRIORITY_ORDER[b.priority] ?? 99)
-      case 'due-date': {
-        if (!a.dueDate && !b.dueDate) return 0
-        if (!a.dueDate) return 1
-        if (!b.dueDate) return -1
-        return a.dueDate.localeCompare(b.dueDate)
-      }
-      case 'status':
-        return (STATUS_ORDER[a.status] ?? 99) - (STATUS_ORDER[b.status] ?? 99)
-    }
-  })
-
   return (
-    <div className="flex flex-col h-screen overflow-hidden font-sans bg-claude-bg">
-      {/* Top nav bar */}
-      <TopNav
-        sidebarOpen={sidebarOpen}
-        onToggleSidebar={() => setSidebarOpen((v) => !v)}
-      />
+    <div className="min-h-screen bg-claude-bg flex flex-col font-sans">
+      {/* Top bar */}
+      <header className="flex items-center justify-between px-8 py-4 border-b border-claude-border shrink-0">
+        <div className="flex items-center gap-2.5">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <circle cx="9" cy="9" r="8.5" stroke="#cc785c" strokeWidth="0.75" fill="none" />
+            <path d="M9 3L10.4 7.4L14.8 9L10.4 10.6L9 15L7.6 10.6L3.2 9L7.6 7.4L9 3Z" fill="#cc785c" />
+          </svg>
+          <span className="text-sm font-semibold text-claude-text">Claude Tasks</span>
+        </div>
+        <Link href="/tasks" className="text-sm text-claude-secondary hover:text-claude-text transition-colors">
+          Skip to task list →
+        </Link>
+      </header>
 
-      <div className="flex flex-1 overflow-hidden">
-      {/* Left sidebar */}
-      <Sidebar isOpen={sidebarOpen} />
+      {/* Hero */}
+      <main className="flex-1 flex flex-col items-center justify-center px-8 py-20">
+        <div className="max-w-[620px] w-full">
 
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden bg-claude-bg">
-        {/* Task list panel — hidden while a task is open */}
-        {!selectedTask && <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-8 pt-8 pb-5 shrink-0">
-            <h1 className="text-2xl font-semibold text-claude-text tracking-tight">Tasks</h1>
-            <button
-              onClick={openNewTaskModal}
-              className="flex items-center gap-1.5 bg-claude-text hover:bg-claude-text/85 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-            >
-              <span className="text-base leading-none">+</span>
-              New task
-            </button>
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 text-claude-accent text-xs font-medium border border-claude-accent/30 bg-claude-accent/8 px-3 py-1.5 rounded-full mb-8">
+            Feature concept prototype
           </div>
 
-          {/* Search bar */}
-          <div className="px-8 pb-4 shrink-0">
-            <div className="relative">
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-claude-secondary pointer-events-none">
-                <SearchIcon />
-              </span>
-              <input
-                type="text"
-                placeholder="Search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-claude-surface border border-claude-border rounded-lg text-sm text-claude-text placeholder:text-claude-secondary/60 outline-none focus:border-claude-accent/60 transition-colors"
-              />
-            </div>
+          {/* Asterisk */}
+          <div className="mb-7">
+            <ClaudeAsterisk />
           </div>
 
-          {/* Filter row */}
-          <div className="px-8 pb-4 flex items-center justify-between gap-4 shrink-0">
-            {/* Status pills — left */}
-            <div className="flex items-center gap-1 flex-wrap">
-              {STATUS_FILTERS.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => setStatusFilter(f.value)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                    statusFilter === f.value
-                      ? 'bg-claude-text text-white border-claude-text'
-                      : 'border-claude-border text-claude-secondary hover:text-claude-text hover:border-claude-text/30'
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
+          {/* Heading */}
+          <h1 className="text-[2.6rem] font-semibold text-claude-text tracking-tight leading-tight mb-3">
+            Welcome to Claude Tasks
+          </h1>
 
-            {/* Project + Sort controls — right */}
-            <div className="flex items-center gap-3 shrink-0">
-              {/* Filter by project */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-claude-secondary whitespace-nowrap">Filter by project</span>
-                <select
-                  value={projectFilter}
-                  onChange={(e) => setProjectFilter(e.target.value)}
-                  className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
-                >
-                  <option value="all">All</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+          {/* Author */}
+          <p className="text-sm text-claude-secondary mb-8">
+            Built by Shannon Chambers. Find me on{' '}
+            <a href="https://www.linkedin.com/in/shannon-chambers/" target="_blank" rel="noopener noreferrer" className="text-claude-text underline underline-offset-2 hover:text-claude-accent transition-colors">LinkedIn</a>,{' '}
+            <a href="https://shannonchambers.cv/" target="_blank" rel="noopener noreferrer" className="text-claude-text underline underline-offset-2 hover:text-claude-accent transition-colors">my personal site</a>, and{' '}
+            <a href="https://github.com/shancham" target="_blank" rel="noopener noreferrer" className="text-claude-text underline underline-offset-2 hover:text-claude-accent transition-colors">GitHub</a>.
+          </p>
+
+          {/* Why */}
+          <p className="text-xs font-semibold text-claude-accent uppercase tracking-widest mb-3">The why behind the prototype</p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-8">
+            I kept running into the same organizational problem inside Claude Chat and decided to prototype a solve.
+          </p>
+
+          {/* Problem */}
+          <p className="text-xs font-semibold text-claude-accent uppercase tracking-widest mb-3">The problem</p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-4">
+            I keep losing my ideas and tasks inside Claude Chat. The chats directory is useful, but finding the right conversation is harder than it should be:
+          </p>
+          <ul className="space-y-2 mb-4 pl-1">
+            {[
+              'Search is hit or miss',
+              "The one-liner summaries Claude generates are helpful, but they don't always match how I think about what we discussed",
+            ].map((item) => (
+              <li key={item} className="flex items-start gap-3 text-base text-claude-secondary leading-relaxed">
+                <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-claude-secondary/40 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="text-base text-claude-secondary leading-relaxed mb-4">
+            So I started asking myself: what do I actually need when I go looking for a specific chat? It&apos;s never really about the conversation. It&apos;s always because the task wasn&apos;t finished and I need to pick up where I left off.
+          </p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-4">
+            What I actually needed was a way to pull incomplete tasks out of my chats, track them, and link back to the original thread. And I wanted all of it to live in the platform where I&apos;m actually doing the work.
+          </p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-10">
+            That&apos;s where Claude Tasks comes in.
+          </p>
+
+          {/* Solution */}
+          <p className="text-xs font-semibold text-claude-accent uppercase tracking-widest mb-3">The solution</p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-4">
+            Your task and its context live together in one place, so picking something back up is effortless.
+          </p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-4">
+            Most task managers are lists you fill out manually. This prototype explores a different idea: Claude recognizing action items as they come up in conversation, tracking them automatically, and staying ready to help you pick up where you left off.
+          </p>
+          <p className="text-base text-claude-secondary leading-relaxed mb-8">
+            This is an early concept I built to explore what AI-native task management could look like inside Claude. Not a finished feature, just a way to think through how it could work.
+          </p>
+
+          {/* Features */}
+          <div className="space-y-5 mb-8">
+            {FEATURES.map(({ label, detail }) => (
+              <div key={label} className="flex items-start gap-4">
+                <span className="text-claude-accent mt-0.5 text-lg leading-none shrink-0">✦</span>
+                <div>
+                  <p className="text-sm font-medium text-claude-text mb-0.5">{label}</p>
+                  <p className="text-sm text-claude-secondary leading-relaxed">{detail}</p>
+                </div>
               </div>
-
-              {/* Sort */}
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-claude-secondary whitespace-nowrap">Sort by</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortBy)}
-                  className="text-xs text-claude-text border border-claude-border bg-claude-surface rounded-full pl-2.5 py-1 outline-none focus:border-claude-accent/60 cursor-pointer transition-colors"
-                >
-                  {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Task table */}
-          <div className="flex-1 overflow-y-auto px-8 pb-4">
-            {sortedTasks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 gap-2 text-center">
-                <p className="text-sm text-claude-secondary">No tasks found</p>
-                {(searchQuery || projectFilter !== 'all' || statusFilter !== 'all') && (
-                  <p className="text-xs text-claude-secondary/60">Try adjusting your filters</p>
-                )}
-              </div>
-            ) : (
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="border-b border-claude-border">
-                    <th className="w-6 pb-2.5 pr-2" />
-                    <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4 w-28">Project</th>
-                    <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4">Task</th>
-                    <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4 w-28">Status</th>
-                    <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 pr-4 w-24">Priority</th>
-                    <th className="text-left text-xs font-medium text-claude-secondary pb-2.5 w-28">Due date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedTasks.map((task) => {
-                    const project = projects.find((p) => p.id === task.projectId)
-                    const statusCfg = STATUS_CONFIG[task.status]
-                    const priorityCfg = PRIORITY_CONFIG[task.priority]
-                    const isDone = task.status === 'done'
-                    const { text: dueDateText, overdue } = task.dueDate
-                      ? formatDueDate(task.dueDate)
-                      : { text: '—', overdue: false }
-                    const isDragging = dragId === task.id
-                    const isDragOver = dragOverId === task.id
+          {/* Cowork */}
+          <p className="text-base text-claude-secondary leading-relaxed mb-12">
+            Claude Tasks is also a natural onramp to Cowork. Claude analyzes each task and, if Cowork can help move it forward, surfaces a &ldquo;Start task in Cowork&rdquo; button right on the task detail view.
+          </p>
 
-                    return (
-                      <tr
-                        key={task.id}
-                        draggable
-                        onDragStart={() => { setDragId(task.id); setSortBy('manual') }}
-                        onDragOver={(e) => { e.preventDefault(); setDragOverId(task.id) }}
-                        onDrop={() => {
-                          if (dragId && dragId !== task.id) reorderTask(dragId, task.id)
-                          setDragId(null); setDragOverId(null)
-                        }}
-                        onDragEnd={() => { setDragId(null); setDragOverId(null) }}
-                        onClick={() => setSelectedTask(task.id)}
-                        className={`border-b border-claude-border cursor-pointer transition-colors
-                          ${isDragging ? 'opacity-40' : ''}
-                          ${isDragOver && !isDragging ? 'bg-claude-accent/6 border-t-2 border-t-claude-accent/40' : 'hover:bg-claude-hover'}
-                          ${isDone ? 'opacity-50' : ''}
-                        `}
-                      >
-                        <td
-                          className="py-3 pr-2 w-6"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <span className="text-claude-secondary/30 hover:text-claude-secondary/60 transition-colors cursor-grab active:cursor-grabbing flex justify-center">
-                            <DragHandleIcon />
-                          </span>
-                        </td>
-                        <td className="py-3 pr-4">
-                          {project && (
-                            <span
-                              className="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap border"
-                              style={{ backgroundColor: `${project.color}15`, color: project.color, borderColor: `${project.color}40` }}
-                            >
-                              {project.name}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <p className={`font-medium text-claude-text leading-snug ${isDone ? 'line-through text-claude-secondary' : ''}`}>
-                            {task.title}
-                          </p>
-                          <p className="text-xs text-claude-secondary mt-0.5 leading-snug line-clamp-1">
-                            {task.summary}
-                          </p>
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full ${statusCfg.className}`} style={statusCfg.style}>
-                            {statusCfg.label}
-                          </span>
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full ${priorityCfg.className}`} style={priorityCfg.style}>
-                            {priorityCfg.label}
-                          </span>
-                        </td>
-                        <td className="py-3">
-                          <span className={`text-xs ${overdue ? '' : 'text-claude-secondary'}`} style={overdue ? { color: '#D97757' } : undefined}>
-                            {dueDateText}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
+        </div>
+      </main>
 
-          {/* Footer */}
-          <div className="shrink-0 h-8 flex items-center justify-center border-t border-claude-border">
-            <p className="text-xs text-claude-secondary/50">
-              Claude To Do — a feature concept prototype
-            </p>
-          </div>
-        </div>}
+      {/* Footer */}
+      <footer className="px-8 py-5 border-t border-claude-border shrink-0 pb-24">
+        <p className="text-xs text-claude-secondary/50 text-center">
+          Claude Tasks — a feature concept prototype exploring AI-native task management
+        </p>
+      </footer>
 
-        {/* Task detail panel — shown full-width when a task is open */}
-        {selectedTask && <TaskDetail key={selectedTask.id} task={selectedTask} />}
+      {/* Sticky CTAs */}
+      <div className="fixed bottom-0 inset-x-0 flex items-center justify-center gap-4 px-8 py-4 bg-claude-bg/90 backdrop-blur-sm border-t border-claude-border">
+        <Link
+          href="/chat"
+          className="inline-flex items-center gap-2 bg-claude-accent hover:bg-claude-accent/90 text-white font-medium text-sm px-6 py-3 rounded-lg transition-colors"
+        >
+          Try the chat
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+        <Link href="/tasks" className="text-sm text-claude-secondary hover:text-claude-text transition-colors">
+          Jump to task list
+        </Link>
       </div>
-
-      </div>{/* end flex row */}
-
-      {isNewTaskModalOpen && <NewTaskModal />}
-      <ToastReminder />
     </div>
   )
 }

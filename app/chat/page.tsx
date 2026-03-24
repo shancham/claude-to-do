@@ -193,7 +193,7 @@ export default function ChatPage() {
 
   function handleTaskClick(taskId: string) {
     setSelectedTask(taskId)
-    router.push('/')
+    router.push('/tasks')
   }
 
   return (

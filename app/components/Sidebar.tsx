@@ -99,7 +99,7 @@ const MAIN_NAV = [
   { icon: <ChatBubbleIcon />, label: 'Chats', href: '/chat' },
   { icon: <FolderIcon />, label: 'Projects', href: '/projects' },
   { icon: <GridIcon />, label: 'Artifacts', href: null },
-  { icon: <CircleCheckIcon />, label: 'Tasks', href: '/' },
+  { icon: <CircleCheckIcon />, label: 'Tasks', href: '/tasks' },
 ]
 
 // ─── Sub-components ───────────────────────────────────────────────────────────

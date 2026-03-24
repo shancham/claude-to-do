@@ -129,12 +129,12 @@ export default function ProjectsPage() {
 
   function handleTaskClick(taskId: string) {
     setSelectedTask(taskId)
-    router.push('/')
+    router.push('/tasks')
   }
 
   function handleViewAllTasks() {
     setProjectFilter(PROJECT_ID)
-    router.push('/')
+    router.push('/tasks')
   }
 
   return (
